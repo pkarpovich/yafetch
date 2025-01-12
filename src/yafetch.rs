@@ -31,13 +31,6 @@ impl Yafetch {
         Ok(x?)
     }
 
-    fn kernel(&self) -> mlua::Result<mlua::Function> {
-        let x = self
-            .lua
-            .create_function(|_, _: ()| Ok(modules::kernel::get()));
-        Ok(x?)
-    }
-
     fn os(&self) -> mlua::Result<mlua::Function> {
         let x = self.lua.create_function(|_, _: ()| Ok(modules::os::get()));
         Ok(x?)
@@ -92,6 +85,13 @@ impl Yafetch {
         Ok(x?)
     }
 
+    fn current_datetime(&self) -> mlua::Result<mlua::Function> {
+        let x = self
+            .lua
+            .create_function(|_, _: ()| Ok(modules::datetime::get()));
+        Ok(x?)
+    }
+
     pub fn register(&self) {
         let globals = self.lua.globals();
         let exports = self.lua.create_table().unwrap();
@@ -117,10 +117,6 @@ impl Yafetch {
         exports
             .set("hostname", self.hostname().unwrap())
             .expect("could not register hostname function");
-
-        exports
-            .set("kernel", self.kernel().unwrap())
-            .expect("could not register kernel function");
 
         exports
             .set("os", self.os().unwrap())
@@ -149,6 +145,13 @@ impl Yafetch {
         exports
             .set("disk_total", self.disk_total().unwrap())
             .expect("could not register disk_total function");
+
+        //
+        // other
+        //
+        exports
+            .set("current_datetime", self.current_datetime().unwrap())
+            .expect("could not register current_datetime function");
 
         globals.set("yafetch", exports).unwrap();
     }

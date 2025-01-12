@@ -1,24 +1,20 @@
-use systemstat::Platform;
+use systemstat::{Platform, System};
 
 pub fn get() -> String {
-    let stat = systemstat::System::new();
-    let upt = stat.uptime().unwrap();
-    let uptime_seconds = upt.as_secs();
+    let system = System::new();
+    match system.uptime() {
+        Ok(uptime) => {
+            let uptime_seconds = uptime.as_secs();
+            let days = uptime_seconds / 86_400;
+            let hours = (uptime_seconds % 86_400) / 3600;
+            let minutes = (uptime_seconds % 3600) / 60;
 
-
-    // Calculate the uptime in hours and minutes respectively
-    let uptime_hours = uptime_seconds / (60 * 60);
-    let uptime_minutes = (uptime_seconds % (60 * 60)) / 60;
-    let mut hstr = uptime_hours.to_string();
-    let mut mstr = uptime_minutes.to_string();
-
-    hstr.push_str("h ");
-    mstr.push_str("m");
-    hstr.push_str(&mstr);
-
-    if uptime_hours == 0 {
-        return mstr;
+            match (days, hours) {
+                (0, 0) => format!("{minutes}m"),
+                (0, _) => format!("{hours}h {minutes}m"),
+                (_, _) => format!("{days}d {hours}h {minutes}m"),
+            }
+        }
+        Err(e) => format!("Failed to fetch uptime: {}", e),
     }
-
-    return hstr;
 }

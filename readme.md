@@ -9,7 +9,7 @@
 ```bash
 git clone https://github.com/yrwq/yafetch && cd yafetch
 cargo build --release
-sudo cp target/release/yafetch /usr/bin
+sudo cp target/release/yafetch /usr/local/bin
 mkdir -p ~/.config/yafetch
 cp examples/sample.lua ~/.config/yafetch/init.lua
 ```

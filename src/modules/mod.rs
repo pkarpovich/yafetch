@@ -1,8 +1,8 @@
 pub mod cpu;
+pub mod datetime;
 pub mod disk;
 pub mod host;
 pub mod hostname;
-pub mod kernel;
 pub mod mem;
 pub mod os;
 pub mod uptime;

@@ -1,26 +1,19 @@
 use sysinfo::System;
-use bytesize::ByteSize;
+
+const BYTES_TO_GIB: f64 = 1.0 / 1024.0 / 1024.0 / 1024.0;
 
 pub fn get_used() -> String {
     let mut sys = System::new_all();
-    sys.refresh_all();
+    sys.refresh_memory();
 
-    let mem = ByteSize::gb(sys.used_memory()).to_string();
-    let mut split_mem = mem.split(" ");
-    //
-    let total = split_mem.nth(0).unwrap();
-
-    return total.to_string();
+    let used_memory_gb = sys.used_memory() as f64 * BYTES_TO_GIB;
+    format!("{:.1} GB", used_memory_gb)
 }
 
 pub fn get_total() -> String {
     let mut sys = System::new_all();
-    sys.refresh_all();
+    sys.refresh_memory();
 
-    let mem = ByteSize::gb(sys.total_memory()).to_string();
-    let mut split_mem = mem.split(" ");
-    //
-    let total = split_mem.nth(0).unwrap();
-
-    return total.to_string();
+    let total_memory_gib = sys.total_memory() as f64 * BYTES_TO_GIB;
+    format!("{:.1} GiB", total_memory_gib)
 }
