@@ -1,0 +1,40 @@
+version: 2
+
+before:
+  hooks:
+    - rustup default stable
+    - cargo install --locked cargo-zigbuild
+    - cargo fetch --locked
+
+builds:
+  - builder: rust
+    id: yafetch
+    binary: yafetch
+    flags:
+      - --release
+      - --bin
+      - yafetch
+    targets:
+      - x86_64-apple-darwin
+      - aarch64-apple-darwin
+
+brews:
+  - name: yafetch
+    repository:
+      owner: pkarpovich
+      name: homebrew-apps
+    commit_author:
+      name: Pavel Karpovich
+      email: pavel.karpovich@outlook.com
+    homepage: https://github.com/pkarpovich/yafetch
+    description: "Yet another neofetch"
+    install: |
+      bin.install "yafetch"
+
+changelog:
+  sort: asc
+  filters:
+    exclude:
+      - "^docs:"
+      - "^test:"
+

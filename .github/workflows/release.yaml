@@ -1,0 +1,28 @@
+name: Release
+
+on:
+  create:
+    tags:
+      - '*'
+
+permissions:
+  contents: write
+
+jobs:
+  goreleaser:
+    runs-on: macos-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: mlugg/setup-zig@v1
+
+      - name: Run GoReleaser
+        uses: goreleaser/goreleaser-action@v6
+        with:
+          version: latest
+          args: release --clean
+        env:
+          GITHUB_TOKEN: ${{ secrets.GORELEASER_TOKEN }}
