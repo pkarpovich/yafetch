@@ -57,6 +57,13 @@ impl Yafetch {
         Ok(x?)
     }
 
+    fn local_ip(&self) -> mlua::Result<mlua::Function> {
+        let x = self
+            .lua
+            .create_function(|_, _: ()| Ok(modules::local_ip::get()));
+        Ok(x?)
+    }
+
     fn disk_total(&self) -> mlua::Result<mlua::Function> {
         let x = self
             .lua
@@ -117,6 +124,10 @@ impl Yafetch {
         exports
             .set("hostname", self.hostname().unwrap())
             .expect("could not register hostname function");
+
+        exports
+            .set("local_ip", self.local_ip().unwrap())
+            .expect("could not register local_ip function");
 
         exports
             .set("os", self.os().unwrap())

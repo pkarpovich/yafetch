@@ -3,6 +3,7 @@ pub mod datetime;
 pub mod disk;
 pub mod host;
 pub mod hostname;
+pub mod local_ip;
 pub mod mem;
 pub mod os;
 pub mod uptime;
