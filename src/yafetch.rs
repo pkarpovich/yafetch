@@ -64,6 +64,13 @@ impl Yafetch {
         Ok(x?)
     }
 
+    fn battery(&self) -> mlua::Result<mlua::Function> {
+        let x = self
+            .lua
+            .create_function(|_, _: ()| Ok(modules::battery::get()));
+        Ok(x?)
+    }
+
     fn disk_total(&self) -> mlua::Result<mlua::Function> {
         let x = self
             .lua
@@ -128,6 +135,10 @@ impl Yafetch {
         exports
             .set("local_ip", self.local_ip().unwrap())
             .expect("could not register local_ip function");
+
+        exports
+            .set("battery", self.battery().unwrap())
+            .expect("could not register battery function");
 
         exports
             .set("os", self.os().unwrap())
