@@ -3,22 +3,24 @@ version: 2
 before:
   hooks:
     - rustup default stable
-    - cargo install --locked cargo-zigbuild
     - cargo fetch --locked
 
 builds:
   - builder: rust
     id: yafetch
     binary: yafetch
+    tool: cargo
+    command: build
     flags:
       - --release
       - --bin
       - yafetch
     targets:
-      - x86_64-apple-darwin
       - aarch64-apple-darwin
+    env:
+      - CARGO_TARGET_AARCH64_APPLE_DARWIN_LINKER=clang
 
-brews:
+homebrew_casks:
   - name: yafetch
     repository:
       owner: pkarpovich
@@ -28,8 +30,12 @@ brews:
       email: pavel.karpovich@outlook.com
     homepage: https://github.com/pkarpovich/yafetch
     description: "Yet another neofetch"
-    install: |
-      bin.install "yafetch"
+    hooks:
+      post:
+        install: |
+          if system_command("/usr/bin/xattr", args: ["-h"]).exit_status == 0
+            system_command "/usr/bin/xattr", args: ["-dr", "com.apple.quarantine", "#{staged_path}/yafetch"]
+          end
 
 changelog:
   sort: asc
