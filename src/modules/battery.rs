@@ -13,13 +13,13 @@ pub fn get() -> String {
             Err(_) => "No battery".to_string(),
         }
     }
-    
+
     #[cfg(target_os = "linux")]
     {
         // Check for battery in /sys/class/power_supply/
         parse_linux_battery()
     }
-    
+
     #[cfg(not(any(target_os = "macos", target_os = "linux")))]
     {
         "Unsupported".to_string()
@@ -31,7 +31,7 @@ fn parse_macos_battery(output: &str) -> String {
     // Parse pmset output
     // Example: "InternalBattery-0 (id=1234567)	100%; charged; 0:00 remaining present: true"
     // or: "InternalBattery-0 (id=1234567)	78%; discharging; 4:15 remaining present: true"
-    
+
     for line in output.lines() {
         if line.contains("InternalBattery") {
             let parts: Vec<&str> = line.split('\t').collect();
@@ -55,7 +55,7 @@ fn parse_macos_battery(output: &str) -> String {
             }
         }
     }
-    
+
     "No battery".to_string()
 }
 
@@ -63,7 +63,7 @@ fn parse_macos_battery(output: &str) -> String {
 fn parse_linux_battery() -> String {
     use std::fs;
     use std::path::Path;
-    
+
     let battery_path = Path::new("/sys/class/power_supply/BAT0");
     if !battery_path.exists() {
         // Try BAT1
@@ -72,12 +72,12 @@ fn parse_linux_battery() -> String {
             return "No battery".to_string();
         }
     }
-    
+
     let capacity = match fs::read_to_string(battery_path.join("capacity")) {
         Ok(cap) => cap.trim().to_string(),
         Err(_) => return "No battery".to_string(),
     };
-    
+
     let status = match fs::read_to_string(battery_path.join("status")) {
         Ok(stat) => match stat.trim() {
             "Charging" => " (charging)",
@@ -87,6 +87,6 @@ fn parse_linux_battery() -> String {
         },
         Err(_) => "",
     };
-    
+
     format!("{}%{}", capacity, status)
 }

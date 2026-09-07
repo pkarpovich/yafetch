@@ -1,5 +1,5 @@
 [tools]
-rust = "latest"
+rust = { version = "1.98", components = "rustfmt,clippy" }
 
 [tasks.build]
 run = "cargo build"
