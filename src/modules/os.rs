@@ -17,6 +17,7 @@ pub fn get() -> String {
             "14" => "Sonoma".to_string(),
             "15" => "Sequoia".to_string(),
             "26" => "Tahoe".to_string(),
+            "27" => "Golden Gate".to_string(),
             _ => "Unknown".to_string(),
         }
     } else {
