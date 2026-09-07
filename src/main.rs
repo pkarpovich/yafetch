@@ -4,11 +4,11 @@ use mlua::Lua;
 
 /// try to get the user's config
 fn get_config() -> std::path::PathBuf {
-    let xdg_dirs = xdg::BaseDirectories::with_prefix("yafetch").unwrap();
-    let config_path = xdg_dirs
+    let xdg_dirs = xdg::BaseDirectories::with_prefix("yafetch");
+
+    xdg_dirs
         .find_config_file("init.lua")
-        .expect("could not find init.lua in ~/.config/yafetch");
-    return config_path;
+        .expect("could not find init.lua in ~/.config/yafetch")
 }
 
 fn main() {

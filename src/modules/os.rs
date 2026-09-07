@@ -1,9 +1,6 @@
 use sysinfo::System;
 
 pub fn get() -> String {
-    let mut sys = System::new_all();
-    sys.refresh_all();
-
     let name = match System::name() {
         Some(name) if name == "Darwin" => "macOS".to_string(),
         Some(name) => name,
@@ -20,6 +17,7 @@ pub fn get() -> String {
             "14" => "Sonoma".to_string(),
             "15" => "Sequoia".to_string(),
             "26" => "Tahoe".to_string(),
+            "27" => "Golden Gate".to_string(),
             _ => "Unknown".to_string(),
         }
     } else {

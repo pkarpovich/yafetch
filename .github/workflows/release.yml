@@ -1,0 +1,200 @@
+name: Release
+
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: read
+
+env:
+  CARGO_TERM_COLOR: always
+  # Apple Silicon only. The runner is arm64, so this is the native target and
+  # nothing is cross-compiled.
+  TARGET: aarch64-apple-darwin
+
+jobs:
+  build:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: jdx/mise-action@v4
+
+      - uses: Swatinem/rust-cache@v2
+
+      # A tag that disagrees with Cargo.toml would ship a binary whose version
+      # nobody can trace back, and the cask would carry the wrong number.
+      - name: Tag matches the crate version
+        run: |
+          tag="${GITHUB_REF_NAME#v}"
+          crate=$(mise exec -- cargo metadata --no-deps --format-version 1 |
+            python3 -c 'import json,sys; print(json.load(sys.stdin)["packages"][0]["version"])')
+          if [ "$tag" != "$crate" ]; then
+            echo "tag $tag does not match Cargo.toml $crate" >&2
+            exit 1
+          fi
+
+      - run: mise run check
+
+      - run: mise exec -- cargo build --release --target "$TARGET"
+
+      - uses: apple-actions/import-codesign-certs@v7
+        with:
+          p12-file-base64: ${{ secrets.MACOS_CERT_P12_BASE64 }}
+          p12-password: ${{ secrets.MACOS_CERT_PASSWORD }}
+
+      # Developer ID plus the hardened runtime is what notarytool accepts, and a
+      # notarized binary is what lets Gatekeeper run a quarantined download at
+      # all: without it every `brew install` needed the xattr hack the old
+      # goreleaser cask carried in its postflight.
+      - name: Sign
+        env:
+          TEAM_ID: ${{ secrets.MACOS_TEAM_ID }}
+        run: |
+          identity=$(security find-identity -v -p codesigning |
+            grep "Developer ID Application" | grep "($TEAM_ID)" |
+            head -n 1 | awk '{print $2}')
+          if [ -z "$identity" ]; then
+            echo "no Developer ID Application identity for team $TEAM_ID" >&2
+            exit 1
+          fi
+          mkdir -p dist
+          cp "target/$TARGET/release/yafetch" dist/yafetch
+          codesign --force --options runtime --timestamp --sign "$identity" dist/yafetch
+          codesign --verify --strict --verbose=2 dist/yafetch
+
+      # The release zip is also the notarization submission. The ticket is
+      # keyed by the code signature, not the archive, so the same bits are
+      # what the cask downloads.
+      - name: Package
+        run: |
+          version="${GITHUB_REF_NAME#v}"
+          (cd dist && zip -j "yafetch-arm64-$version.zip" yafetch)
+
+      # A bare executable cannot be stapled, so there is no offline verdict:
+      # Gatekeeper fetches the ticket on the first run of a quarantined copy.
+      # notarytool's Accepted is also the only gate there is - spctl answers
+      # "does not seem to be an app" for every bare binary, notarized or not.
+      - name: Notarize
+        env:
+          KEY_ID: ${{ secrets.ASC_KEY_ID }}
+          ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
+          KEY_P8: ${{ secrets.ASC_KEY_CONTENT }}
+        run: |
+          version="${GITHUB_REF_NAME#v}"
+          key=$(mktemp)
+          printf '%s\n' "$KEY_P8" > "$key"
+          submission=$(xcrun notarytool submit "dist/yafetch-arm64-$version.zip" \
+            --key "$key" --key-id "$KEY_ID" --issuer "$ISSUER_ID" \
+            --wait --timeout 30m --output-format json)
+          echo "$submission"
+          id=$(echo "$submission" | python3 -c 'import json,sys; print(json.load(sys.stdin)["id"])')
+          status=$(echo "$submission" | python3 -c 'import json,sys; print(json.load(sys.stdin)["status"])')
+          if [ "$status" != "Accepted" ]; then
+            xcrun notarytool log "$id" --key "$key" --key-id "$KEY_ID" --issuer "$ISSUER_ID" >&2
+            rm -f "$key"
+            exit 1
+          fi
+          rm -f "$key"
+
+      - name: Checksums
+        run: |
+          rm dist/yafetch
+          cd dist && shasum -a 256 *.zip > checksums.txt && cat checksums.txt
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: dist
+          path: dist/
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v8
+        with:
+          name: dist
+          path: dist
+
+      - uses: softprops/action-gh-release@v3
+        with:
+          files: |
+            dist/*.zip
+            dist/checksums.txt
+          generate_release_notes: true
+
+  cask:
+    needs: release
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v8
+        with:
+          name: dist
+          path: dist
+
+      - name: Read the version and the checksum
+        id: facts
+        run: |
+          {
+            version="${GITHUB_REF_NAME#v}"
+            echo "version=$version"
+            echo "sha=$(shasum -a 256 "dist/yafetch-arm64-$version.zip" | cut -d' ' -f1)"
+          } >> "$GITHUB_OUTPUT"
+
+      - uses: actions/checkout@v7
+        with:
+          repository: pkarpovich/homebrew-apps
+          token: ${{ secrets.HOMEBREW_TAP_TOKEN }}
+          path: tap
+
+      - name: Write the cask
+        env:
+          VERSION: ${{ steps.facts.outputs.version }}
+          SHA: ${{ steps.facts.outputs.sha }}
+        run: |
+          mkdir -p tap/Casks
+          cat > tap/Casks/yafetch.rb <<EOF
+          cask "yafetch" do
+            version "${VERSION}"
+            sha256 "${SHA}"
+
+            url "https://github.com/pkarpovich/yafetch/releases/download/v#{version}/yafetch-arm64-#{version}.zip"
+            name "yafetch"
+            desc "Minimal system information tool configured in Lua"
+            homepage "https://github.com/pkarpovich/yafetch"
+
+            livecheck do
+              url :url
+              strategy :github_latest
+            end
+
+            depends_on arch: :arm64
+
+            binary "yafetch"
+
+            zap trash: "~/.config/yafetch"
+
+            caveats <<~CAVEATS
+              yafetch reads ~/.config/yafetch/init.lua and exits without one.
+              Start from the sample:
+
+                mkdir -p ~/.config/yafetch
+                curl -o ~/.config/yafetch/init.lua https://raw.githubusercontent.com/pkarpovich/yafetch/main/examples/sample.lua
+            CAVEATS
+          end
+          EOF
+
+      - name: Commit and push
+        working-directory: tap
+        env:
+          VERSION: ${{ steps.facts.outputs.version }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git diff --cached --quiet && exit 0
+          git commit -m "yafetch ${VERSION}"
+          git push

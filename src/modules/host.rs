@@ -8,5 +8,5 @@ pub fn get() -> String {
     }
 
     let f = fs::read_to_string(path);
-    return f.unwrap();
+    f.unwrap()
 }

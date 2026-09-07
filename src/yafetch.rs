@@ -20,90 +20,66 @@ impl Yafetch {
     // TODO arch
 
     fn host(&self) -> mlua::Result<mlua::Function> {
-        let x = self
-            .lua
-            .create_function(|_, _: ()| Ok(modules::host::get()));
-        Ok(x?)
+        self.lua
+            .create_function(|_, _: ()| Ok(modules::host::get()))
     }
 
     fn cpu(&self) -> mlua::Result<mlua::Function> {
-        let x = self.lua.create_function(|_, _: ()| Ok(modules::cpu::get()));
-        Ok(x?)
+        self.lua.create_function(|_, _: ()| Ok(modules::cpu::get()))
     }
 
     fn os(&self) -> mlua::Result<mlua::Function> {
-        let x = self.lua.create_function(|_, _: ()| Ok(modules::os::get()));
-        Ok(x?)
+        self.lua.create_function(|_, _: ()| Ok(modules::os::get()))
     }
 
     fn uptime(&self) -> mlua::Result<mlua::Function> {
-        let x = self
-            .lua
-            .create_function(|_, _: ()| Ok(modules::uptime::get()));
-        Ok(x?)
+        self.lua
+            .create_function(|_, _: ()| Ok(modules::uptime::get()))
     }
 
     fn user(&self) -> mlua::Result<mlua::Function> {
-        let x = self
-            .lua
-            .create_function(|_, _: ()| Ok(modules::user::get()));
-        Ok(x?)
+        self.lua
+            .create_function(|_, _: ()| Ok(modules::user::get()))
     }
 
     fn hostname(&self) -> mlua::Result<mlua::Function> {
-        let x = self
-            .lua
-            .create_function(|_, _: ()| Ok(modules::hostname::get()));
-        Ok(x?)
+        self.lua
+            .create_function(|_, _: ()| Ok(modules::hostname::get()))
     }
 
     fn local_ip(&self) -> mlua::Result<mlua::Function> {
-        let x = self
-            .lua
-            .create_function(|_, _: ()| Ok(modules::local_ip::get()));
-        Ok(x?)
+        self.lua
+            .create_function(|_, _: ()| Ok(modules::local_ip::get()))
     }
 
     fn battery(&self) -> mlua::Result<mlua::Function> {
-        let x = self
-            .lua
-            .create_function(|_, _: ()| Ok(modules::battery::get()));
-        Ok(x?)
+        self.lua
+            .create_function(|_, _: ()| Ok(modules::battery::get()))
     }
 
     fn disk_total(&self) -> mlua::Result<mlua::Function> {
-        let x = self
-            .lua
-            .create_function(|_, path: String| Ok(modules::disk::get_total(path)));
-        Ok(x?)
+        self.lua
+            .create_function(|_, path: String| Ok(modules::disk::get_total(path)))
     }
 
     fn disk_free(&self) -> mlua::Result<mlua::Function> {
-        let x = self
-            .lua
-            .create_function(|_, path: String| Ok(modules::disk::get_free(path)));
-        Ok(x?)
+        self.lua
+            .create_function(|_, path: String| Ok(modules::disk::get_free(path)))
     }
 
     fn mem_used(&self) -> mlua::Result<mlua::Function> {
-        let x = self
-            .lua
-            .create_function(|_, _: ()| Ok(modules::mem::get_used()));
-        Ok(x?)
+        self.lua
+            .create_function(|_, _: ()| Ok(modules::mem::get_used()))
     }
 
     fn mem_total(&self) -> mlua::Result<mlua::Function> {
-        let x = self
-            .lua
-            .create_function(|_, _: ()| Ok(modules::mem::get_total()));
-        Ok(x?)
+        self.lua
+            .create_function(|_, _: ()| Ok(modules::mem::get_total()))
     }
 
     fn current_datetime(&self) -> mlua::Result<mlua::Function> {
-        let x = self
-            .lua
-            .create_function(|_, _: ()| Ok(modules::datetime::get()));
-        Ok(x?)
+        self.lua
+            .create_function(|_, _: ()| Ok(modules::datetime::get()))
     }
 
     pub fn register(&self) {
