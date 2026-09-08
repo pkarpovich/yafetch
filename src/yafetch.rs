@@ -7,14 +7,16 @@ pub struct Yafetch {
 }
 
 impl Yafetch {
-    /// run yafetch with the given configuration file
-    pub fn run(&self, path: std::path::PathBuf) {
-        let src: String = std::fs::read_to_string(path).unwrap();
-        let chnk = self.lua.load(&src);
-        match chnk.exec() {
-            Ok(_) => {}
-            Err(e) => println!("{}", e),
-        }
+    /// run yafetch with the given configuration file, or say why it could not be run
+    pub fn run(&self, path: &std::path::Path) -> Result<(), String> {
+        let source = match std::fs::read_to_string(path) {
+            Ok(source) => source,
+            Err(error) => return Err(format!("{}: {error}", path.display())),
+        };
+        let Err(error) = self.lua.load(&source).exec() else {
+            return Ok(());
+        };
+        Err(format!("{}: {error}", path.display()))
     }
 
     // TODO arch

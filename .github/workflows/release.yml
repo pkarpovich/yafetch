@@ -178,11 +178,12 @@ jobs:
             zap trash: "~/.config/yafetch"
 
             caveats <<~CAVEATS
-              yafetch reads ~/.config/yafetch/init.lua and exits without one.
+              yafetch reads ~/.config/yafetch/init.lua and says so without one.
               Start from the sample:
 
-                mkdir -p ~/.config/yafetch
-                curl -o ~/.config/yafetch/init.lua https://raw.githubusercontent.com/pkarpovich/yafetch/main/examples/sample.lua
+                curl --create-dirs -o ~/.config/yafetch/init.lua https://raw.githubusercontent.com/pkarpovich/yafetch/main/examples/sample.lua
+
+              \`yafetch --help\` lists what else it takes.
             CAVEATS
           end
           EOF
