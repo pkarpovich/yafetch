@@ -23,9 +23,15 @@ cp examples/sample.lua ~/.config/yafetch/init.lua
 
 ## usage
 
-run `yafetch`
+```
+yafetch [<config>]     render a configuration, ~/.config/yafetch/init.lua by default
+yafetch -V, --version  print the version and exit
+yafetch -h, --help     print this message and exit
+```
 
 yafetch is extensible in lua, the default location for the configuration file is `~/.config/yafetch/init.lua`.
+A run with no configuration there, an unreadable one, or lua that does not load, says so on stderr and
+exits non-zero rather than panicking.
 
 ## configuration
 
